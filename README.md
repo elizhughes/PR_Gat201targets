@@ -28,7 +28,7 @@ Grow 5ml culture from colony (1 colony = 1 Biorep) in YPD, 30C, 180 rpm ON.
 Seed at OD 600nm = 0.2 , 200 ul per well.
 Run for 2 days (300 cycles).
 
- #Plate Reader 5: 20230329
+# Plate Reader 5: 20230329
 Test WT KN99-alpha and GAT201 deletion mutant 003(Madhani), CAS3 deletion mutant, CCP1 deletion mutant, ISP6 deletion mutant in RPMI at 37 degrees.
 3 Bioreps, 3 Techreps each.
 Also, testing the growth phenotype of 1 of the double GAT201 strains P2.7ZH, 1 BioRep, 3 TechReps each.
