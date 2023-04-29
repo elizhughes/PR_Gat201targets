@@ -18,7 +18,7 @@ output: output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#Plate Reader 6: 20230329
+# Plate Reader 6: 20230329
 Test WT KN99-alpha and GAT201 deletion mutant 003(Madhani), CFT1 deletion mutant, SCW1 deletion mutant, CPL1 deletion mutant and ADA2 deletion mutantin RPMI at 37 degrees.
 3 Bioreps, 3 Techreps each.
 Also, testing the growth phenotype of 1 of the double GAT201 strains P2.28EH, 1 BioRep, 3 TechReps each.
@@ -31,7 +31,7 @@ Run for 2 days (276 cycles).
 
 # Read in transposed data as csv file RPMI
 
-```{r csv_file}
+```{r csv_file_6}
 
 rawdata <- read.csv("../Input/20230329_RPMI_Gat201Targets_Plate6_csv.csv")
 
@@ -39,7 +39,7 @@ rawdata <- read.csv("../Input/20230329_RPMI_Gat201Targets_Plate6_csv.csv")
 
 # Change time in seconds to time in days RPMI
 
-```{r mutate_time}
+```{r mutate_time_6}
 
  rawdata_day<-mutate(rawdata, Time = Time/86400)
 
@@ -47,7 +47,7 @@ rawdata <- read.csv("../Input/20230329_RPMI_Gat201Targets_Plate6_csv.csv")
 
 # Tidy the data using the melt function from reshape2 RPMI
 
-```{r reshape}
+```{r reshape_6}
 
 reshaped <- melt(rawdata_day, id=c("Time", "Temp"), 
                               variable.name="Well",
@@ -58,7 +58,7 @@ summary(reshaped)
 
 # Read in the Plate map data from csv file RPMI
 
-```{r Load_platemap}
+```{r Load_platemap_6}
 
 platemap <- read.csv("../Input/20230329_RPMI_Gat201Targets_Plate6_setup.csv")
 head(platemap, n=50)
@@ -68,7 +68,7 @@ head(platemap, n=50)
 
 # Combine the reshaped data with the plate map, pairing them by Well 
 
-```{r join}
+```{r join_6}
 
 annotated <- inner_join(reshaped, platemap, by="Well")
  
@@ -76,7 +76,7 @@ annotated <- inner_join(reshaped, platemap, by="Well")
 
 # How stable are ODs of blank wells, to use for normalisation? RPMI
 
-```{r plot_blank_ODs}
+```{r plot_blank_ODs_6}
 
 ggplot(data=filter(annotated,Strain==""),
            aes(x=Time, y=OD595, color=Strain, group = Well)) + 
@@ -86,7 +86,7 @@ ggplot(data=filter(annotated,Strain==""),
 ```
 
 
-```{r plot_individual_blank_wells}
+```{r plot_individual_blank_wells_6}
 
 ggplot(data=filter(annotated,Well=="G12"), 
        aes(x=Time, y=OD595, color=Strain, group = Well)) + 
@@ -103,7 +103,7 @@ REMOVE WELLS A6,A7,A8,A12,H6,H7,H9,H10,D1,D12,E12
 ## Calculate median OD for blank wells for each growth medium RPMI
 
 
-```{r calc_blank_medians}
+```{r calc_blank_medians_6}
 
 blank_OD_summary <- annotated %>%
   filter(Strain=="") %>%
@@ -129,7 +129,7 @@ print(blank_OD_summary)
 
 # Subtract blank OD to make corrected OD and Plot OD_corrected v Time (hrs) RPMI
 
-```{r subtract_blank_OD}
+```{r subtract_blank_OD_6}
 
 normalisedOD <- annotated %>%
   left_join(blank_OD_summary, by="Media") %>%
@@ -139,7 +139,7 @@ normalisedOD <- annotated %>%
 
 ## Plot OD all RPMI
 
-```{r plot_all}
+```{r plot_all_6}
 
 ggplot(data=normalisedOD %>%
                       filter(Strain != ""), 
@@ -155,9 +155,9 @@ ggplot(data=normalisedOD %>%
        scale_color_brewer(palette="Set1")
 ```
 
-## Plot OD cfo1 RPMI
+## Plot OD SCW1 RPMI
 
-```{r plot_all}
+```{r plot_SCW1}
 
 ggplot(data=normalisedOD %>%
                       filter(Strain == "SCW1"), 
@@ -177,10 +177,10 @@ ggplot(data=normalisedOD %>%
 
 ## Plot OD all stat_summary(geom -"line") remove excess lines RPMI
 
-```{r plot_stat_summary}
+```{r plot_stat_summary_6}
 
 ggplot(data=normalisedOD  %>%
-    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","CFT1","CPL1","SCW1", "ADA2")))%>%
+    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
@@ -210,17 +210,60 @@ ggplot(data=normalisedOD  %>%
 ```
 
 
-```{r save_RMPI_PR_Gat201_poster.png}
+```{r save_RMPI_PR6.png}
 
-ggsave("../Results/AllSummary.png",width = 6.6,height=5)
+ggsave("../Results/AllSummaryPR6.png",width = 6.6,height=5)
 ```
+
+## Plot OD all stat_summary(geom -"line") remove excess lines RPMI minus P2.28Eh (dblGAT201)
+
+```{r plot_stat_summary_minusdblGAT201_6}
+
+ggplot(data=normalisedOD  %>%
+    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
+                     filter(Strain != ""), 
+                      aes(x=Time, y=OD_corrected, color=Strain)) + 
+       #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
+       stat_summary(fun = "median", geom = "line", size = 1) +
+       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+  
+       labs(x = "Number of Days",
+            y = "Absorbance (595nm)",
+            title = "GAT201 Targets", subtitle = "Plate 6: RPMI at 37 degrees") +
+           
+       theme_bw() +
+       theme(text = element_text(size = 15))+
+       theme(axis.title = element_text(size = 25))+
+      
+       theme(axis.ticks.length = unit(0.3, "cm"))+
+       theme(title = element_text(size = 20))+
+       theme(panel.grid.minor = element_blank())+
+       theme(legend.title = element_text(size = 25))+
+      theme(legend.background = element_rect(fill = "transparent", color=NA))+
+  theme(legend.key = element_rect(fill = "transparent", color=NA))+
+       theme (plot.background =  element_rect(fill = "transparent", color=NA), 
+         panel.background = element_rect(fill = "transparent", color=NA),)+
+      theme(panel.border = element_rect(linetype = "solid", colour = "black", size = 2))+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5) )+
+       scale_color_brewer(palette="Set1")
+       
+```
+
+
+```{r save_RMPI_PR6_minusdblGAT201.png}
+
+ggsave("../Results/AllSummaryPR6nodblGAT201.png",width = 6.6,height=5)
+```
+
+
 
 
 ## Plot OD all stat_summary(geom -"line") Highlight summary line RPMI
 
-```{r plot_all_stat_summary}
+```{r plot_all_stat_summary_6}
 
-ggplot(data=normalisedOD %>%
+ggplot(data=normalisedOD  %>%
+    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
@@ -244,8 +287,8 @@ ggplot(data=normalisedOD %>%
        scale_color_brewer(palette="Set1")
 ```
 
-```{r save_RMPI_PR_Gat201Targets.png}
+```{r save_RMPI_PR6_Gat201Targets.png}
 
-ggsave("../Results/AllStatSummaryPlate6.png",width = 6.6,height=5)
+ggsave("../Results/StatSummaryPlate6.png",width = 6.6,height=5)
 ```
 

@@ -212,7 +212,7 @@ ggplot(data=normalisedOD %>%
 
 ```{r save_RMPI_PR3.png}
 
-ggsave("../Results/AllSummary_PR3.png",width = 6.6,height=5)
+ggsave("../Results/AllSummaryPR3.png",width = 6.6,height=5)
 ```
 
 

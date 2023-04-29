@@ -222,7 +222,7 @@ ggplot(data=normalisedOD  %>%
 
 ```{r save_RMPI_PR5.png}
 
-ggsave("../Results/AllSummary_PR5.png",width = 6.6,height=5)
+ggsave("../Results/AllSummaryPR5.png",width = 6.6,height=5)
 ```
 
 
@@ -245,7 +245,7 @@ ggplot(data=normalisedOD  %>%
        theme_bw() +
        theme(text = element_text(size = 15))+
        theme(axis.title = element_text(size = 25))+
-       theme(axis.title.y=element_blank()) +
+       
        theme(axis.ticks.length = unit(0.3, "cm"))+
        theme(title = element_text(size = 20))+
        theme(panel.grid.minor = element_blank())+
@@ -264,7 +264,7 @@ ggplot(data=normalisedOD  %>%
 
 ```{r save_RMPI_PR5nodbldGAT201.png}
 
-ggsave("../Results/AllSummary_PR5nodblGAT201.png",width = 6.6,height=5)
+ggsave("../Results/AllSummaryPR5nodblGAT201.png",width = 6.6,height=5)
 ```
 
 
