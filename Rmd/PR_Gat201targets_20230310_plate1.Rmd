@@ -172,7 +172,7 @@ ggplot(data=normalisedOD %>%
 ```{r plot_stat_summary_1}
 
 ggplot(data=normalisedOD %>%
-          dplyr::mutate(Strain = factor(Strain, levels = c("KN99", "GAT201", "GAT204", "LIV3","BLP1")))%>%
+          dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "GAT204", "LIV3","BLP1")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
