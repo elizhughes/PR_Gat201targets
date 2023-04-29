@@ -189,7 +189,8 @@ ggplot(data=normalisedOD %>%
 
 ```{r plot_stat_summary_4}
 
-ggplot(data=normalisedOD %>%
+ggplot(data=normalisedOD  %>%
+    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","BLP2","BLP4","CFO1")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
@@ -198,14 +199,12 @@ ggplot(data=normalisedOD %>%
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
-            title = "Cell Culture Media") +
-           facet_wrap(Media ~ .)+
+            title = "GAT201 Targets", subtitle = "Plate 4: RPMI at 37 degrees") +
        theme_bw() +
        theme(text = element_text(size = 15))+
        theme(axis.title = element_text(size = 25))+
-       theme(axis.title.y=element_blank()) +
        theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 30))+
+       theme(title = element_text(size = 20))+
        theme(panel.grid.minor = element_blank())+
        theme(legend.title = element_text(size = 25))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
@@ -213,6 +212,7 @@ ggplot(data=normalisedOD %>%
        theme (plot.background =  element_rect(fill = "transparent", color=NA), 
          panel.background = element_rect(fill = "transparent", color=NA),)+
       theme(panel.border = element_rect(linetype = "solid", colour = "black", size = 2))+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5) )+
        scale_color_brewer(palette="Set1")
        
 ```
@@ -228,7 +228,8 @@ ggsave("../Results/AllSummaryPR4.png",width = 6.6,height=5)
 
 ```{r plot_all_stat_summary_4}
 
-ggplot(data=normalisedOD %>%
+ggplot(data=normalisedOD  %>%
+    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","BLP2","BLP4","CFO1")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
@@ -242,7 +243,7 @@ ggplot(data=normalisedOD %>%
        theme_bw() +
        theme(text = element_text(size = 15))+
        theme(axis.title = element_text(size = 20)) +
-  theme(axis.ticks.length = unit(0.3, "cm"))+
+      theme(axis.ticks.length = unit(0.3, "cm"))+
        theme(title = element_text(size = 20))+
     
        theme(legend.title = element_text(size = 15))+
