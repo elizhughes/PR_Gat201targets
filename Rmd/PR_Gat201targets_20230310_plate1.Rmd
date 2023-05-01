@@ -85,6 +85,15 @@ annotated <- inner_join(reshaped, platemap, by="Well")
  
 ```
 
+# Rename variables to italics delta
+```{r  renamevariables_1}
+#rename (annotated,GAT201 = gat201\U0394)
+
+
+```
+
+
+
 # How stable are ODs of blank wells, to use for normalisation? RPMI
 
 ```{r plot_blank_ODs_1}
@@ -175,9 +184,9 @@ ggplot(data=normalisedOD %>%
           dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "GAT204", "LIV3","BLP1")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
-       #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
+       
        stat_summary(fun = "median", geom = "line", size = 1) +
-       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
      
   
        labs(x = "Number of Days",
@@ -186,11 +195,11 @@ ggplot(data=normalisedOD %>%
            
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 25))+
+       theme(axis.title = element_text(size = 20))+
        theme(axis.ticks.length = unit(0.3, "cm"))+
        theme(title = element_text(size = 20))+
        theme(panel.grid.minor = element_blank())+
-       theme(legend.title = element_text(size = 25))+
+       theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
   theme(legend.key = element_rect(fill = "transparent", color=NA))+
        theme (plot.background =  element_rect(fill = "transparent", color=NA), 
@@ -218,7 +227,7 @@ ggplot(data=normalisedOD %>%
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
    
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",

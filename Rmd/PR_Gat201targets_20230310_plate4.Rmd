@@ -195,18 +195,18 @@ ggplot(data=normalisedOD  %>%
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
             title = "GAT201 Targets", subtitle = "Plate 4: RPMI at 37 degrees") +
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 25))+
+       theme(axis.title = element_text(size = 20))+
        theme(axis.ticks.length = unit(0.3, "cm"))+
        theme(title = element_text(size = 20))+
        theme(panel.grid.minor = element_blank())+
-       theme(legend.title = element_text(size = 25))+
+       theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
   theme(legend.key = element_rect(fill = "transparent", color=NA))+
        theme (plot.background =  element_rect(fill = "transparent", color=NA), 
@@ -234,7 +234,7 @@ ggplot(data=normalisedOD  %>%
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.12,expand=c(0,0), breaks = c(0, 0.05, 0.1))) +
    
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",

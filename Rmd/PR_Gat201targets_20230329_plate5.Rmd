@@ -195,7 +195,7 @@ ggplot(data=normalisedOD  %>%
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -203,12 +203,12 @@ ggplot(data=normalisedOD  %>%
            
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 25))+
+       theme(axis.title = element_text(size = 20))+
        theme(axis.title.y=element_blank()) +
        theme(axis.ticks.length = unit(0.3, "cm"))+
        theme(title = element_text(size = 20))+
        theme(panel.grid.minor = element_blank())+
-       theme(legend.title = element_text(size = 25))+
+       theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
   theme(legend.key = element_rect(fill = "transparent", color=NA))+
        theme (plot.background =  element_rect(fill = "transparent", color=NA), 
@@ -222,7 +222,7 @@ ggplot(data=normalisedOD  %>%
 
 ```{r save_RMPI_PR5.png}
 
-ggsave("../Results/AllSummaryPR5.png",width = 6.6,height=5)
+ggsave("../Results/AllSummaryPR5.png",width = 7,height=5)
 ```
 
 
@@ -234,9 +234,9 @@ ggplot(data=normalisedOD  %>%
     dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","CAS3","CCP1","ISP6", "CNAG_05458")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
-       #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
+        
        stat_summary(fun = "median", geom = "line", size = 1) +
-       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -244,12 +244,12 @@ ggplot(data=normalisedOD  %>%
            
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 25))+
+       theme(axis.title = element_text(size = 20))+
        
        theme(axis.ticks.length = unit(0.3, "cm"))+
        theme(title = element_text(size = 20))+
        theme(panel.grid.minor = element_blank())+
-       theme(legend.title = element_text(size = 25))+
+       theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
   theme(legend.key = element_rect(fill = "transparent", color=NA))+
        theme (plot.background =  element_rect(fill = "transparent", color=NA), 
@@ -278,7 +278,7 @@ ggplot(data=normalisedOD %>%
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       #scale_y_continuous(limits=c(0,0.5),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
    
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -299,10 +299,45 @@ ggplot(data=normalisedOD %>%
 
 ```{r save_RMPI_PR5_GAT201.png}
 
-ggsave("../Results/AllStatSummaryPlate5.png",width = 6.6,height=5)
+ggsave("../Results/StatSummaryPlate5.png",width =7 ,height=5)
 ```
 
+## Plot OD all stat_summary(geom -"line") remove excess lines RPMI for WT, GAT201 and dbl GAT201 P2.7ZH only
 
+```{r plot_stat_summary_minus P2,7ZH}
 
+ggplot(data=normalisedOD  %>%
+    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","P2.7ZH (dbl GAT201)")))%>%
+                     filter(Strain != ""), 
+                      aes(x=Time, y=OD_corrected, color=Strain)) + 
+        
+       stat_summary(fun = "median", geom = "line", size = 1) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+  
+       labs(x = "Number of Days",
+            y = "Absorbance (595nm)",
+            title = "Double GAT201 Strain P2.7ZH", subtitle = "RPMI at 37 degrees") +
+           
+       theme_bw() +
+       theme(text = element_text(size = 15))+
+       theme(axis.title = element_text(size = 20))+
+       
+       theme(axis.ticks.length = unit(0.3, "cm"))+
+       theme(title = element_text(size = 15))+
+       theme(panel.grid.minor = element_blank())+
+       theme(legend.title = element_text(size = 15))+
+      theme(legend.background = element_rect(fill = "transparent", color=NA))+
+  theme(legend.key = element_rect(fill = "transparent", color=NA))+
+       theme (plot.background =  element_rect(fill = "transparent", color=NA), 
+         panel.background = element_rect(fill = "transparent", color=NA),)+
+      theme(panel.border = element_rect(linetype = "solid", colour = "black", size = 2))+
+   theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5) )+
+       scale_color_brewer(palette="Set1")
+       
+```
 
+```{r save_RMPI_dblGAT201_P2.7ZH.png}
+
+ggsave("../Results/StatSummaryP2_7ZH.png",width =7 ,height=5)
+```
 
