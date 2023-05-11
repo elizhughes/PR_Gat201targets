@@ -2,7 +2,11 @@
 title: "PRGAT201Targets_20230310_PRAssay1"
 author: "Liz Hughes"
 date: "2023_03_13"
+<<<<<<< HEAD
 output: 
+=======
+output:
+>>>>>>> 8d0b48b4ea97b74bd0636564d87e0d719390dc78
   html_document:
     toc: yes
     toc_depth: 2
@@ -71,7 +75,14 @@ summary(reshaped)
 
 ```{r Load_platemap_1}
 
-platemap <- read.csv("../Input/20230308_RPMI_Gat201Targets_Plate1_setup.csv")
+platemap <- 
+  read.csv("../Input/20230308_RPMI_Gat201Targets_Plate1_setup.csv") %>%     
+  dplyr::mutate(
+    Strain = factor(Strain, 
+                    levels = c("KN99 (WT)", "GAT201", "GAT204", "LIV3","BLP1"),
+                    labels = c("WT", "gat201∆", "gat204∆", "liv3∆","blp1∆"))
+  )
+
 head(platemap, n=50)
 
 
@@ -85,21 +96,13 @@ annotated <- inner_join(reshaped, platemap, by="Well")
  
 ```
 
-# Rename variables to italics delta
-```{r  renamevariables_1}
-#rename (annotated,GAT201 = gat201\U0394)
-
-
-```
-
-
 
 # How stable are ODs of blank wells, to use for normalisation? RPMI
 
 ```{r plot_blank_ODs_1}
 
-ggplot(data=filter(annotated,Strain==""),
-           aes(x=Time, y=OD595, color=Strain, group = Well)) + 
+ggplot(data=filter(annotated, is.na(Strain)),
+           aes(x=Time, y=OD595,  group = Well)) + 
        geom_line() + 
        facet_grid(Media ~ .) +
        labs(x="Time (days)", y="Absorbance at 595 nm")
@@ -108,8 +111,13 @@ ggplot(data=filter(annotated,Strain==""),
 
 ```{r plot_individual_blank_wells_1}
 
+<<<<<<< HEAD
 ggplot(data=filter(annotated,Well=="A3"), 
        aes(x=Time, y=OD595, color=Strain, group = Well)) + 
+=======
+ggplot(data=filter(annotated,Well=="H11"), 
+       aes(x=Time, y=OD595, group = Well)) + 
+>>>>>>> 8d0b48b4ea97b74bd0636564d87e0d719390dc78
  
        geom_line() + 
      theme_bw()+
@@ -121,25 +129,13 @@ Remove well A3, A4, A11, A12, B1, F1, H1, H2, H3, H4, H5, H8, H9
 
 # Calculate median OD for blank wells for each growth medium RPMI
 
+For time < 1hr (1/ 24 days)
 
 ```{r calc_blank_medians_1}
 
 blank_OD_summary <- annotated %>%
-  filter(Strain=="") %>%
-  filter(Well != "A3") %>%
-  filter(Well != "A4") %>%
-  filter(Well != "A11") %>%
-  filter(Well != "A12") %>%
-  filter(Well != "B1") %>%
-  filter(Well != "F1") %>%
-  filter(Well != "H1") %>%
-  filter(Well != "H2") %>%
-  filter(Well != "H3") %>%
-  filter(Well != "H4") %>%
-  filter(Well != "H5") %>%
-  filter(Well != "H8") %>%
-  filter(Well != "H9") %>%
-    group_by(Media) %>%
+  filter(is.na(Strain), Time < 1/24) %>%
+  group_by(Media) %>%
   summarise(OD_median=median(OD595),
             OD_mean=mean(OD595),
             OD_max=max(OD595),
@@ -162,7 +158,7 @@ normalisedOD <- annotated %>%
 ```{r plot_all_1}
 
 ggplot(data=normalisedOD %>%
-                      filter(Strain != ""), 
+                      filter( !is.na(Strain) ), 
                       aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
        geom_line() + 
        scale_y_continuous(limits=c(0,0.15),expand=c(0,0))+
@@ -181,12 +177,11 @@ ggplot(data=normalisedOD %>%
 ```{r plot_stat_summary_1}
 
 ggplot(data=normalisedOD %>%
-          dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "GAT204", "LIV3","BLP1")))%>%
-                     filter(Strain != ""), 
-                      aes(x=Time, y=OD_corrected, color=Strain)) + 
+         filter( !is.na(Strain) ), 
+       aes(x=Time, y=OD_corrected, color=Strain)) + 
        
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.15),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
      
   
        labs(x = "Number of Days",
@@ -222,12 +217,11 @@ ggsave("../Results/AllSummaryPR1.png",width = 6.6,height=5)
 ```{r plot_all_stat_summary_1}
 
 ggplot(data=normalisedOD %>%
-          dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "GAT204", "LIV3","BLP1")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.15),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
    
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
