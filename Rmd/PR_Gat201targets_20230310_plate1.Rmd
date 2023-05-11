@@ -2,7 +2,7 @@
 title: "PRGAT201Targets_20230310_PRAssay1"
 author: "Liz Hughes"
 date: "2023_03_13"
-output: output:
+output: 
   html_document:
     toc: yes
     toc_depth: 2
@@ -108,7 +108,7 @@ ggplot(data=filter(annotated,Strain==""),
 
 ```{r plot_individual_blank_wells_1}
 
-ggplot(data=filter(annotated,Well=="H11"), 
+ggplot(data=filter(annotated,Well=="A3"), 
        aes(x=Time, y=OD595, color=Strain, group = Well)) + 
  
        geom_line() + 

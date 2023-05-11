@@ -2,7 +2,7 @@
 title: "PRGAT201Targets_20230310_Plate3"
 author: "Liz Hughes"
 date: "2023/03/24"
-output: output:
+output: 
   html_document:
     toc: yes
     toc_depth: 2
