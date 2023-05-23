@@ -71,8 +71,12 @@ summary(reshaped)
 
 ```{r Load_platemap_4}
 
-platemap <- read.csv("../Input/20230321_RPMI_Gat201Targets_Plate4_setup.csv")
-head(platemap, n=50)
+platemap <- read.csv("../Input/20230321_RPMI_Gat201Targets_Plate4_setup.csv") %>%      dplyr::mutate(
+                    Strain = factor(Strain, 
+                    levels = c("KN99 (WT)", "GAT201", "BLP2", "CFO1","BLP4"),
+                    labels = c("WT", "gat201∆", "blp2∆", "cfo1∆","blp4∆"))
+  )
+head(platemap, n=10)
 
 
 ```
@@ -89,18 +93,17 @@ annotated <- inner_join(reshaped, platemap, by="Well")
 
 ```{r plot_blank_ODs_4}
 
-ggplot(data=filter(annotated,Strain==""),
-           aes(x=Time, y=OD595, color=Strain, group = Well)) + 
-       geom_line() + 
-       facet_grid(Media ~ .) +
-       labs(x="Time (days)", y="Absorbance at 595 nm")
+ggplot(data=filter(annotated, is.na(Strain)),
+          aes(x=Time, y=OD595,  group = Well)) + 
+          geom_line() + 
+          labs(x="Time (days)", y="Absorbance at 595 nm")
 ```
 
 
 ```{r plot_individual_blank_wells_4}
 
-ggplot(data=filter(annotated,Well=="H10"), 
-       aes(x=Time, y=OD595, color=Strain, group = Well)) + 
+ggplot(data=filter(annotated,Well=="G12"), 
+       aes(x=Time, y=OD595, group = Well)) + 
  
        geom_line() + 
      theme_bw()+
@@ -109,7 +112,7 @@ ggplot(data=filter(annotated,Well=="H10"),
 ```
 
 
-Remove well F1, H10
+Remove well A2-7, H2-10, B1,D1,F1
 
 ## Calculate median OD for blank wells for each growth medium RPMI
 
@@ -117,11 +120,25 @@ Remove well F1, H10
 ```{r calc_blank_medians_4}
 
 blank_OD_summary <- annotated %>%
-  filter(Strain=="") %>%
+   filter(is.na(Strain), Time < 1/24) %>%
+  filter(Well != "A1") %>%
+  filter(Well != "A2") %>%
+  filter(Well != "A3") %>%
+  filter(Well != "A4") %>%
+  filter(Well != "A5") %>%
+  filter(Well != "A6") %>%
+  filter(Well != "A7") %>%
+  filter(Well != "B1") %>%
+  filter(Well != "D1") %>%
   filter(Well != "F1") %>%
+  filter(Well != "H2") %>%
+  filter(Well != "H4") %>%
+  filter(Well != "H5") %>%
+  filter(Well != "H6") %>%
+  filter(Well != "H7") %>%
+  filter(Well != "H8") %>%
+  filter(Well != "H9") %>%
   filter(Well != "H10") %>%
-  
-  
     group_by(Media) %>%
   summarise(OD_median=median(OD595),
             OD_mean=mean(OD595),
@@ -135,8 +152,8 @@ print(blank_OD_summary)
 ```{r subtract_blank_OD_4}
 
 normalisedOD <- annotated %>%
-  left_join(blank_OD_summary, by="Media") %>%
-  mutate(OD_corrected = OD595 - OD_median)
+              left_join(blank_OD_summary, by="Media") %>%
+              mutate(OD_corrected = OD595 - OD_median)
 
 ```
 
@@ -145,10 +162,10 @@ normalisedOD <- annotated %>%
 ```{r plot_all_4}
 
 ggplot(data=normalisedOD %>%
-                      filter(Strain != ""), 
+                       filter( !is.na(Strain) ), 
                       aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
        geom_line() + 
-       scale_y_continuous(limits=c(0,0.15),expand=c(0,0))+
+       scale_y_continuous(limits=c(0,0.17),expand=c(0,0))+
        facet_wrap(Strain ~ .)+
   
        labs(x = "Time(Hrs)",
@@ -163,30 +180,11 @@ ggplot(data=normalisedOD %>%
 ```{r plot_all_CFO1}
 
 ggplot(data=normalisedOD %>%
-                      filter(Strain == "CFO1"), 
-                      aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
+                      filter(Strain == "cfo1∆"), 
+                      aes(x=Time, y=OD_corrected, ccolour=Biorep, group = Well)) + 
        geom_line() + 
-       scale_y_continuous(limits=c(0,0.15),expand=c(0,0))+
-       facet_wrap(Biorep ~ .)+
-  
-       labs(x = "Time(Hrs)",
-            y = "Absorbance (595nm)") +
-       theme(text = element_text(size = 20))+
-       theme_bw()+
-       scale_color_brewer(palette="Set1")
-```
-## Plot OD BLP4 RPMI
-
-```{r plot_BLP4}
-
-ggplot(data=normalisedOD %>%
-                      filter(Strain == "BLP4"), 
-                      aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
-       geom_line() + 
-       scale_y_continuous(limits=c(0,0.15),expand=c(0,0))+
-       facet_wrap(Biorep ~ .)+
-  
-       labs(x = "Time(Hrs)",
+       scale_y_continuous(limits=c(0,0.18),expand=c(0,0))+
+              labs(x = "Time(Hrs)",
             y = "Absorbance (595nm)") +
        theme(text = element_text(size = 20))+
        theme_bw()+
@@ -196,24 +194,23 @@ ggplot(data=normalisedOD %>%
 
 ## Plot OD all stat_summary(geom -"line") remove excess lines RPMI
 
-```{r plot_stat_summary_4}
+```{r plot_stat_summary_4_all}
 
 ggplot(data=normalisedOD  %>%
-    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","BLP2","BLP4","CFO1")))%>%
-                     filter(Strain != ""), 
+    #dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","BLP2","BLP4","CFO1")))%>%
+                     filter( !is.na(Strain) ),  
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
-       #geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.15),expand=c(0,0), breaks = c(0, 0.05, 0.15)) +
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
             title = "GAT201 Targets", subtitle = "Plate 4: RPMI at 37 degrees") +
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20))+
+       theme(axis.title = element_text(size = 15))+
        theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 20))+
+       theme(title = element_text(size = 15))+
        theme(panel.grid.minor = element_blank())+
        theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
@@ -227,9 +224,48 @@ ggplot(data=normalisedOD  %>%
 ```
 
 
-```{r save_RMPI_PR4.png}
+```{r save_RMPI_PR4_all.png}
 
 ggsave("../Results/AllSummaryPR4.png",width = 6.6,height=5)
+```
+
+## Plot OD all stat_summary(geom -"line") remove excess lines RPMI CFO1 only
+
+```{r plot_stat_summary_4_cfo1}
+
+ggplot(data=normalisedOD  %>%
+   
+                     filter(Strain == "cfo1∆"),  
+                      aes(x=Time, y=OD_corrected)) + 
+       geom_line(aes(group = Well), size = 0.2, alpha = 0.5, colour = "purple") + 
+       stat_summary(fun = "median", geom = "line", size = 1) +
+       scale_y_continuous(limits=c(0,0.17,expand=c(0,0), breaks = c(0, 0.05, 0.15))) +
+   
+  
+       labs(x = "Number of Days",
+            y = "Absorbance (595nm)",
+            title = "cfo1∆", subtitle = "Plate 4: RPMI at 37 degrees") +
+       theme_bw() +
+       theme(text = element_text(size = 15))+
+       theme(axis.title = element_text(size = 15))+
+       theme(axis.ticks.length = unit(0.3, "cm"))+
+       theme(title = element_text(size = 15))+
+       theme(panel.grid.minor = element_blank())+
+       theme(legend.title = element_text(size = 15))+
+      theme(legend.background = element_rect(fill = "transparent", color=NA))+
+  theme(legend.key = element_rect(fill = "transparent", color=NA))+
+       theme (plot.background =  element_rect(fill = "transparent", color=NA), 
+         panel.background = element_rect(fill = "transparent", color=NA),)+
+      theme(panel.border = element_rect(linetype = "solid", colour = "black", size = 2))+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5) )+
+       scale_color_brewer(palette="Set1")
+       
+```
+
+
+```{r save_RMPI_PR4_cfo1.png}
+
+ggsave("../Results/AllSummaryPR4_cfo1.png",width = 5,height=5)
 ```
 
 
@@ -238,12 +274,12 @@ ggsave("../Results/AllSummaryPR4.png",width = 6.6,height=5)
 ```{r plot_all_stat_summary_4}
 
 ggplot(data=normalisedOD  %>%
-    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","BLP2","BLP4","CFO1")))%>%
-                     filter(Strain != ""), 
+    #dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","BLP2","BLP4","CFO1")))%>%
+                     filter( !is.na(Strain) ), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.12,expand=c(0,0), breaks = c(0, 0.05, 0.1))) +
+       scale_y_continuous(limits=c(0,0.17,expand=c(0,0), breaks = c(0, 0.05, 0.15))) +
    
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -251,9 +287,9 @@ ggplot(data=normalisedOD  %>%
  
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20)) +
+       theme(axis.title = element_text(size = 15)) +
       theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 20))+
+       theme(title = element_text(size = 15))+
     
        theme(legend.title = element_text(size = 15))+
   theme(panel.grid.minor = element_blank())+
@@ -262,7 +298,7 @@ ggplot(data=normalisedOD  %>%
        scale_color_brewer(palette="Set1")
 ```
 
-```{r save_RMPI_PR4.png}
+```{r save_RMPI_PR4_summ.png}
 
 ggsave("../Results/StatSummaryPlate4.png",width = 6.6,height=5)
 ```

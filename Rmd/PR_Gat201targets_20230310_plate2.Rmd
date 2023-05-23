@@ -19,13 +19,25 @@ knitr::opts_chunk$set(echo = TRUE , warning=FALSE, message=FALSE)
 ```
 
 # Plate Reader 2: 20230310
-Test WT KN99-alpha and GAT201 deletion mutant 003(Madhani), ECM2201 deletion mutant, MEP1 deletion mutant and PDR802 deletion mutant in RPMI at 37 degrees..
+Test WT KN99-alpha and GAT201 deletion mutant 003(Madhani), ECM2201 deletion mutant, MEP1 deletion mutant and PDR802 deletion mutant in RPMI at 37 degrees.
 4 Bioreps, 3 Techreps each.
 Grow 5ml culture from colony (1 colony = 1 Biorep) in YPD, 30C, 180 rpm ON.
 Seed at OD 600nm = 0.2 , 200 ul per well.
 Run for 2 days (320 cycles).
 
+# Load packages
 
+```{r load_packages_2}
+
+library("reshape2")
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(rmarkdown)
+library(cowplot)
+library(yaml)
+library(knitr)
+```
 
 # Read in transposed data as csv file RPMI
 
@@ -58,8 +70,15 @@ summary(reshaped)
 
 ```{r Load_platemap_2}
 
-platemap <- read.csv("../Input/20230310_RPMI_Gat201Targets_Plate2_setup.csv")
-head(platemap, n=50)
+platemap <- read.csv("../Input/20230310_RPMI_Gat201Targets_Plate2_setup.csv") %>%     
+            dplyr::mutate(
+                    Strain = factor(Strain, 
+                    levels = c("KN99 (WT)", "GAT201", "ECM2201", "MEP1","PDR802"),
+                    labels = c("WT", "gat201∆", "ecm2201∆", "mep∆","pdr802∆"))
+  )
+head(platemap, n=10)
+
+
 
 
 ```
@@ -76,52 +95,36 @@ annotated <- inner_join(reshaped, platemap, by="Well")
 
 ```{r plot_blank_ODs_2}
 
-ggplot(data=filter(annotated,Strain==""),
-           aes(x=Time, y=OD595, color=Strain, group = Well)) + 
-       geom_line() + 
-       facet_grid(Media ~ .) +
-       labs(x="Time (days)", y="Absorbance at 595 nm")
+ggplot(data=filter(annotated, is.na(Strain)),
+          aes(x=Time, y=OD595,  group = Well)) + 
+          geom_line() + 
+          labs(x="Time (days)", y="Absorbance at 595 nm")
 ```
+
 
 
 ```{r plot_individual_blank_wells_2}
 
 ggplot(data=filter(annotated,Well=="H11"), 
-       aes(x=Time, y=OD595, color=Strain, group = Well)) + 
- 
+       aes(x=Time, y=OD595, group = Well)) + 
        geom_line() + 
-     theme_bw()+
-     labs(x="Time (hrs)", y="Absorbance at 595 nm")
+      theme_bw()+
+      labs(x="Time (hrs)", y="Absorbance at 595 nm")
 
 ```
 
 
 Remove well A7,B1,D1,F1,H2-H11
 
-## Calculate median OD for blank wells for each growth medium RPMI
-Remove well A7,B1,D1,F1,H2-H11
+# Calculate median OD for blank wells for each growth medium RPMI
+
+For time < 1hr (1/ 24 days)
 
 ```{r calc_blank_medians_2}
 
 blank_OD_summary <- annotated %>%
-  filter(Strain=="") %>%
-  filter(Well != "A7") %>%
-  filter(Well != "B1") %>%
-  filter(Well != "D1") %>%
-  filter(Well != "A12") %>%
-  filter(Well != "F1") %>%
-  filter(Well != "H2") %>%
-  filter(Well != "H3") %>%
-  filter(Well != "H4") %>%
-  filter(Well != "H5") %>%
-  filter(Well != "H6") %>%
-  filter(Well != "H7") %>%
-  filter(Well != "H8") %>%
-  filter(Well != "H9") %>%
-  filter(Well != "H10") %>%
-  filter(Well != "H11") %>%
-  
-    group_by(Media) %>%
+   filter(is.na(Strain), Time < 1/24) %>%
+   group_by(Media) %>%
   summarise(OD_median=median(OD595),
             OD_mean=mean(OD595),
             OD_max=max(OD595),
@@ -144,7 +147,7 @@ normalisedOD <- annotated %>%
 ```{r plot_all_2}
 
 ggplot(data=normalisedOD %>%
-                      filter(Strain != ""), 
+                      filter( !is.na(Strain) ), 
                       aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
        geom_line() + 
        scale_y_continuous(limits=c(0,0.15),expand=c(0,0))+
@@ -163,12 +166,12 @@ ggplot(data=normalisedOD %>%
 ```{r plot_stat_summary_2}
 
 ggplot(data=normalisedOD %>%
-        dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "ECM2201","MEP1","PDR802")))%>%
-                     filter(Strain != ""), 
+        #dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "ECM2201","MEP1","PDR802")))%>%
+                     filter( !is.na(Strain) ), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.16),expand=c(0,0), breaks = c(0, 0.05, 0.15)) +
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -176,9 +179,9 @@ ggplot(data=normalisedOD %>%
            
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20))+
+       theme(axis.title = element_text(size = 15))+
        theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 20))+
+       theme(title = element_text(size = 15))+
        theme(panel.grid.minor = element_blank())+
        theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
@@ -192,7 +195,7 @@ ggplot(data=normalisedOD %>%
 ```
 
 
-```{r save_RMPI_PR2.png}
+```{r save_RMPI_PR2all.png}
 
 ggsave("../Results/AllSummaryPR2.png",width = 6.6,height=5)
 ```
@@ -203,12 +206,12 @@ ggsave("../Results/AllSummaryPR2.png",width = 6.6,height=5)
 ```{r plot_all_stat_summary_2}
 
 ggplot(data=normalisedOD %>%
-        dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "ECM2201","MEP1","PDR802")))%>%
-                     filter(Strain != ""), 
+        #dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)", "GAT201", "ECM2201","MEP1","PDR802")))%>%
+                      filter( !is.na(Strain) ),  
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.12),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+       scale_y_continuous(limits=c(0,0.16),expand=c(0,0), breaks = c(0, 0.05, 0.15)) +
    
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -216,9 +219,9 @@ ggplot(data=normalisedOD %>%
  
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20)) +
+       theme(axis.title = element_text(size = 15)) +
   theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 20))+
+       theme(title = element_text(size = 15))+
     
        theme(legend.title = element_text(size = 15))+
   theme(panel.grid.minor = element_blank())+

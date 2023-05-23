@@ -26,7 +26,19 @@ Grow 5ml culture from colony (1 colony = 1 Biorep) in YPD, 30C, 180 rpm ON.
 Seed at OD 600nm = 0.2 , 200 ul per well.
 Run for 2 days (276 cycles).
 
+# Load packages
 
+```{r load_packages_2}
+
+library("reshape2")
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(rmarkdown)
+library(cowplot)
+library(yaml)
+library(knitr)
+```
 
 
 # Read in transposed data as csv file RPMI
@@ -60,8 +72,13 @@ summary(reshaped)
 
 ```{r Load_platemap_6}
 
-platemap <- read.csv("../Input/20230329_RPMI_Gat201Targets_Plate6_setup.csv")
-head(platemap, n=50)
+platemap <- read.csv("../Input/20230329_RPMI_Gat201Targets_Plate6_setup.csv") %>%     
+            dplyr::mutate(
+                    Strain = factor(Strain, 
+                    levels = c("KN99 (WT)", "GAT201", "CFT1", "SCW1","CPL1", "ADA2", "P2.28EH (dbl GAT201)"),
+                    labels = c("WT", "gat201∆", "cft1∆", "scw1∆","cpl1∆", "ada2∆","P2.28EH (dbl GAT201)" ))
+  )
+head(platemap, n=10)
 
 
 ```
@@ -78,18 +95,19 @@ annotated <- inner_join(reshaped, platemap, by="Well")
 
 ```{r plot_blank_ODs_6}
 
-ggplot(data=filter(annotated,Strain==""),
-           aes(x=Time, y=OD595, color=Strain, group = Well)) + 
+ggplot(data=filter(annotated, is.na(Strain)),
+           aes(x=Time, y=OD595,  group = Well)) + 
        geom_line() + 
        facet_grid(Media ~ .) +
        labs(x="Time (days)", y="Absorbance at 595 nm")
 ```
 
 
+
 ```{r plot_individual_blank_wells_6}
 
 ggplot(data=filter(annotated,Well=="G12"), 
-       aes(x=Time, y=OD595, color=Strain, group = Well)) + 
+       aes(x=Time, y=OD595,  group = Well)) + 
  
        geom_line() + 
      theme_bw()+
@@ -98,28 +116,16 @@ ggplot(data=filter(annotated,Well=="G12"),
 ```
 
 
-REMOVE WELLS A6,A7,A8,A12,H6,H7,H9,H10,D1,D12,E12
+REMOVE WELLS A6,A7,A8,A12,H6,H7,H9,H10,D1,D12,E12 if looking at the whole expt.
 
-## Calculate median OD for blank wells for each growth medium RPMI
-
+## Calculate median OD for blank wells for each growth medium RPMI in the first hour.
+Not need to remove wells because only looking at the first hour.
 
 ```{r calc_blank_medians_6}
 
 blank_OD_summary <- annotated %>%
-  filter(Strain=="") %>%
-  filter(Well != "A6") %>%
-  filter(Well != "A7") %>%
-  filter(Well != "A8") %>%
-  filter(Well != "A12") %>%
-  filter(Well != "H6") %>%
-  filter(Well != "H7") %>%
-  filter(Well != "H9") %>%
-  filter(Well != "H10") %>%
-  filter(Well != "D1") %>%
-  filter(Well != "D12") %>%
-  filter(Well != "E12") %>%
-  
-    group_by(Media) %>%
+   filter(is.na(Strain), Time < 1/24) %>%
+  group_by(Media) %>%
   summarise(OD_median=median(OD595),
             OD_mean=mean(OD595),
             OD_max=max(OD595),
@@ -142,10 +148,10 @@ normalisedOD <- annotated %>%
 ```{r plot_all_6}
 
 ggplot(data=normalisedOD %>%
-                      filter(Strain != ""), 
+                      filter( !is.na(Strain) ), 
                       aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
        geom_line() + 
-       scale_y_continuous(limits=c(0,0.05),expand=c(0,0))+
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0))+
        facet_wrap(Strain ~ .)+
   
        labs(x = "Time(Hrs)",
@@ -155,37 +161,18 @@ ggplot(data=normalisedOD %>%
        scale_color_brewer(palette="Set1")
 ```
 
-## Plot OD SCW1 RPMI
-
-```{r plot_SCW1}
-
-ggplot(data=normalisedOD %>%
-                      filter(Strain == "SCW1"), 
-                      aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
-       geom_line() + 
-       scale_y_continuous(limits=c(0,0.15),expand=c(0,0))+
-       facet_wrap(Biorep ~ .)+
-  
-       labs(x = "Time(Hrs)",
-            y = "Absorbance (595nm)") +
-       theme(text = element_text(size = 20))+
-       theme_bw()+
-       scale_color_brewer(palette="Set1")
-```
-
-
 
 ## Plot OD all stat_summary(geom -"line") remove excess lines RPMI
 
 ```{r plot_stat_summary_6}
 
 ggplot(data=normalisedOD  %>%
-    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
-                     filter(Strain != ""), 
+    #dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
+                     filter( !is.na(Strain) ), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
         
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.05),expand=c(0,0), breaks = c(0, 0.025, 0.05)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -193,10 +180,10 @@ ggplot(data=normalisedOD  %>%
            
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20))+
-       theme(axis.title.y=element_blank()) +
+       theme(axis.title = element_text(size = 15))+
+       
        theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 20))+
+       theme(title = element_text(size = 15))+
        theme(panel.grid.minor = element_blank())+
        theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
@@ -220,12 +207,12 @@ ggsave("../Results/AllSummaryPR6.png",width = 6.6,height=5)
 ```{r plot_stat_summary_minusdblGAT201_6}
 
 ggplot(data=normalisedOD  %>%
-    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
-                     filter(Strain != ""), 
+    dplyr::mutate(Strain = factor(Strain, levels = c("WT", "gat201∆", "cft1∆", "scw1∆","cpl1∆", "ada2∆")))%>%
+                    filter(Strain != ""),
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.05),expand=c(0,0), breaks = c(0, 0.025, 0.05)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -233,10 +220,10 @@ ggplot(data=normalisedOD  %>%
            
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20))+
+       theme(axis.title = element_text(size = 15))+
       
        theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 20))+
+       theme(title = element_text(size = 15))+
        theme(panel.grid.minor = element_blank())+
        theme(legend.title = element_text(size = 15))+
       theme(legend.background = element_rect(fill = "transparent", color=NA))+
@@ -263,12 +250,12 @@ ggsave("../Results/AllSummaryPR6nodblGAT201.png",width = 6.6,height=5)
 ```{r plot_all_stat_summary_6}
 
 ggplot(data=normalisedOD  %>%
-    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
-                     filter(Strain != ""), 
+    #dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","ADA2","CPL1","SCW1", "CFT1")))%>%
+                    filter( !is.na(Strain) ),
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
        geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
        stat_summary(fun = "median", geom = "line", size = 1) +
-       scale_y_continuous(limits=c(0,0.05),expand=c(0,0), breaks = c(0, 0.025, 0.05)) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
    
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
@@ -276,9 +263,9 @@ ggplot(data=normalisedOD  %>%
  
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20)) +
+       theme(axis.title = element_text(size = 15)) +
   theme(axis.ticks.length = unit(0.3, "cm"))+
-       theme(title = element_text(size = 20))+
+       theme(title = element_text(size = 15))+
     
        theme(legend.title = element_text(size = 15))+
   theme(panel.grid.minor = element_blank())+
@@ -289,15 +276,15 @@ ggplot(data=normalisedOD  %>%
 
 ```{r save_RMPI_PR6_Gat201Targets.png}
 
-ggsave("../Results/StatSummaryPlate6.png",width = 6.6,height=5)
+ggsave("../Results/StatSummaryPlate6.png",width = 7,height=5)
 ```
 
-## Plot OD all stat_summary(geom -"line") remove excess lines RPMI for WT, GAT201 and dbl GAT201 P2.28EHonly
+## Plot OD all stat_summary(geom -"line") remove excess lines RPMI for WT, GAT201 and dbl GAT201 P2.28EH only
 
 ```{r plot_stat_summary_minus P2.28EH}
 
 ggplot(data=normalisedOD  %>%
-    dplyr::mutate(Strain = factor(Strain, levels = c("KN99 (WT)","GAT201","P2.28EH (dbl GAT201)")))%>%
+    dplyr::mutate(Strain = factor(Strain, levels = c("WT","gat201∆","P2.28EH (dbl GAT201)")))%>%
                      filter(Strain != ""), 
                       aes(x=Time, y=OD_corrected, color=Strain)) + 
         
@@ -306,11 +293,11 @@ ggplot(data=normalisedOD  %>%
   
        labs(x = "Number of Days",
             y = "Absorbance (595nm)",
-            title = "Double GAT201 Strain P2.28EH", subtitle = "RPMI at 37 degrees") +
+            title = "Double GAT201 strain", subtitle = "P2.28EHH in RPMI at 37 degrees") +
            
        theme_bw() +
        theme(text = element_text(size = 15))+
-       theme(axis.title = element_text(size = 20))+
+       theme(axis.title = element_text(size = 15))+
        
        theme(axis.ticks.length = unit(0.3, "cm"))+
        theme(title = element_text(size = 15))+
@@ -328,5 +315,5 @@ ggplot(data=normalisedOD  %>%
 
 ```{r save_RMPI_dblGAT201_P2.7ZH.png}
 
-ggsave("../Results/StatSummaryP2_28EH.png",width =7 ,height=5)
+ggsave("../Results/StatSummaryP2_28EH.png",width =8 ,height=5)
 ```
