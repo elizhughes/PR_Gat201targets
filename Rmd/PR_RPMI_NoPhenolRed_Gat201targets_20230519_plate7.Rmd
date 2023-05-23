@@ -1,0 +1,247 @@
+---
+title: "PRGAT201Targets_20230519_PRAssay7"
+author: "Liz Hughes"
+date: "2023_03_13"
+output: 
+  html_document:
+    toc: yes
+    toc_depth: 2
+  word_document:
+    toc: yes
+    toc_depth: '2'
+  pdf_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE , warning=FALSE, message=FALSE)
+```
+
+
+# Plate Reader 7: 20230519
+Test WT KN99-alpha and GAT201 deletion mutant 003(Madhani), Gat204 deletion mutant, LIV3 deletion mutant and BLP1 deletion mutant in RPMI at 37 degrees.
+3 Bioreps, 3 Techreps each.
+Test CNAG_05812 (K:H antiporter) and CNAG_01983 (RCV1), both GAT201/Gat204 targets.
+RPMI minus Phenol Red.
+Grow 5ml culture from colony (1 colony = 1 Biorep) in YPD, 30C, 180 rpm ON.
+Seed at OD 600nm = 0.2 , 200 ul per well.
+Run for 2 days (166 cycles).
+
+
+# Load packages
+
+```{r load_packages_7}
+
+library("reshape2")
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(rmarkdown)
+library(cowplot)
+library(yaml)
+library(knitr)
+```
+
+
+
+# Read in transposed data as csv file RPMI
+
+```{r csv_file_7}
+
+rawdata <- read.csv("../Input/20230519_RPMI_noPhenolRed_Gat201Targets_Plate7_csv.csv")
+
+```
+
+# Change time in seconds to time in days RPMI
+
+```{r mutate_time_7}
+
+ rawdata_day<-mutate(rawdata, Time = Time/86400)
+
+```
+
+# Tidy the data using the melt function from reshape2 RPMI
+
+```{r reshape_7}
+
+reshaped <- melt(rawdata_day, id=c("Time", "Temp"), 
+                              variable.name="Well",
+                              value.name="OD595")
+
+summary(reshaped)
+```
+
+# Read in the Plate map data from csv file RPMI
+
+```{r Load_platemap_7}
+
+platemap <- 
+  read.csv("../Input/20230519_RPMI_noPhenolRed_Gat201Targets_Plate7_setup.csv") %>%     
+  dplyr::mutate(
+    Strain = factor(Strain, 
+                    levels = c("KN99", "GAT201", "GAT204", "LIV3","BLP1","RCV1","CNAG_05812"),
+                    labels = c("WT", "gat201∆", "gat204∆", "liv3∆","blp1∆","rcv1∆", "CNAG_05812∆" ))
+  )
+
+head(platemap, n=10)
+
+
+```
+
+# Combine the reshaped data with the plate map, pairing them by Well 
+
+```{r join_7}
+
+annotated <- inner_join(reshaped, platemap, by="Well")
+ 
+```
+
+
+# How stable are ODs of blank wells, to use for normalisation? RPMI
+
+```{r plot_blank_ODs_7}
+
+ggplot(data=filter(annotated, is.na(Strain)),
+           aes(x=Time, y=OD595,  group = Well)) + 
+       geom_line() + 
+       labs(x="Time (days)", y="Absorbance at 595 nm")
+```
+
+
+```{r plot_individual_blank_wells_7}
+
+ggplot(data=filter(annotated,Well=="H11"), 
+       aes(x=Time, y=OD595, group = Well)) + 
+       geom_line() + 
+       theme_bw()+
+       labs(x="Time (hrs)", y="Absorbance at 595 nm")
+
+```
+
+
+
+# Calculate median OD for blank wells for each growth medium RPMI in first hour only
+
+For time < 1hr (1/ 24 days)
+
+```{r calc_blank_medians_7}
+
+blank_OD_summary <- annotated %>%
+  filter(is.na(Strain), Time < 1/24) %>%
+  
+  group_by(Media) %>%
+  summarise(OD_median=median(OD595),
+            OD_mean=mean(OD595),
+            OD_max=max(OD595),
+            OD_min=min(OD595))
+print(blank_OD_summary)
+```
+
+# Subtract blank OD to make corrected OD and Plot OD_corrected v Time (hrs) RPMI
+
+```{r subtract_blank_OD_7}
+
+normalisedOD <- annotated %>%
+  left_join(blank_OD_summary, by="Media") %>%
+  mutate(OD_corrected = OD595 - OD_median)
+
+```
+
+## Plot OD all RPMI
+
+```{r plot_all_7}
+
+ggplot(data=normalisedOD %>%
+                      filter( !is.na(Strain) ), 
+                      aes(x=Time, y=OD_corrected, color=Strain, group = Well)) + 
+       geom_line() + 
+       scale_y_continuous(limits=c(0,0.15),expand=c(0,0))+
+       facet_wrap(Strain ~ .)+
+  
+       labs(x = "Time(Hrs)",
+            y = "Absorbance (595nm)") +
+       theme(text = element_text(size = 20))+
+       theme_bw()+
+       scale_color_brewer(palette="Set1")
+```
+
+
+## Plot OD all stat_summary(geom -"line") remove excess lines RPMI
+
+```{r plot_stat_summary_7}
+
+ggplot(data=normalisedOD %>%
+          filter( !is.na(Strain) ), 
+         aes(x=Time, y=OD_corrected, color=Strain)) + 
+         
+         stat_summary(fun = "median", geom = "line", size = 1) +
+         scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+     
+  
+       labs(x = "Number of Days",
+            y = "Absorbance (595nm)",
+            title = "GAT201 Targets", subtitle = "Plate 7: RPMI: No Phenol Red at 37 degrees") +
+           
+       theme_bw() +
+       theme(text = element_text(size = 15))+
+       theme(axis.title = element_text(size = 15))+
+       theme(axis.ticks.length = unit(0.3, "cm"))+
+       theme(title = element_text(size = 15))+
+       theme(panel.grid.minor = element_blank())+
+       theme(legend.title = element_text(size = 15))+
+      theme(legend.background = element_rect(fill = "transparent", color=NA))+
+  theme(legend.key = element_rect(fill = "transparent", color=NA))+
+       theme (plot.background =  element_rect(fill = "transparent", color=NA), 
+         panel.background = element_rect(fill = "transparent", color=NA),)+
+      theme(panel.border = element_rect(linetype = "solid", colour = "black", size = 2))+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5) )+
+       scale_color_brewer(palette="Set1")
+       
+```
+
+
+```{r save_RMPInoPhenol_PR7.png}
+
+ggsave("../Results/AllSummaryPR7.png",width = 6.6,height=5)
+```
+
+
+## Plot OD all stat_summary(geom -"line") Highlight summary line RPMI
+
+```{r plot_all_stat_summary_7}
+
+ggplot(data=normalisedOD %>%
+                     filter( !is.na(Strain) ), 
+                      aes(x=Time, y=OD_corrected, color=Strain)) + 
+       geom_line(aes(group = Well), size = 0.2, alpha = 0.2) + 
+       stat_summary(fun = "median", geom = "line", size = 1) +
+       scale_y_continuous(limits=c(0,0.1),expand=c(0,0), breaks = c(0, 0.05, 0.1)) +
+   
+       labs(x = "Number of Days",
+            y = "Absorbance (595nm)",
+            title = "GAT201 Targets", subtitle = "Plate 7: RPMI: No Phenol Red at 37 degrees") +
+ 
+       theme_bw() +
+       theme(text = element_text(size = 15))+
+       theme(axis.title = element_text(size = 15)) +
+  theme(axis.ticks.length = unit(0.3, "cm"))+
+       theme(title = element_text(size = 15))+
+    
+       theme(legend.title = element_text(size = 15))+
+  theme(panel.grid.minor = element_blank())+
+   theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5) )+
+  
+       scale_color_brewer(palette="Set1")
+```
+
+```{r save_RMPInoPhenol_PR7_Gat201Targets.png}
+
+ggsave("../Results/StatSummaryPlate7.png",width = 6.6,height=5)
+```
+
+
+
+
+
+
